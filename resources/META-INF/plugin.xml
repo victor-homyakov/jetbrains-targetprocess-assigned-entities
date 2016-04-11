@@ -1,0 +1,33 @@
+<idea-plugin version="2">
+    <id>com.targetprocess.assigned.entities.plugin</id>
+    <name>Connector to assigned Targetprocess entities</name>
+    <version>1.0</version>
+    <vendor email="vkhomyackov@gmail.com" url="https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities">Victor Homyakov</vendor>
+
+    <description><![CDATA[
+      Adds support of Targetprocess server into Jetbrains' IDE (IDEA, WebStorm, etc.).
+      Retrieves assigned entities from Targetprocess server.<br>
+    ]]></description>
+
+    <change-notes><![CDATA[
+      Initial release
+    ]]>
+    </change-notes>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+    <idea-version since-build="141.0"/>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.xml</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="tasks.xml">com.intellij.tasks</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>
