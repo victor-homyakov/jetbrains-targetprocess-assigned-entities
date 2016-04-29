@@ -68,7 +68,7 @@ public class TargetprocessRepository extends BaseRepositoryImpl {
         where.add("(entityType.name=='Bug' or entityType.name=='UserStory')");
         where.add("(entityState.isFinal==false)");
         if (StringUtil.isNotEmpty(query)) {
-            where.add("(name.contains('" + query + "'))");
+            where.add("(name.contains('" + query + "') or id.ToString().contains('" + query + "'))");
         }
 
         URIBuilder uriBuilder;
