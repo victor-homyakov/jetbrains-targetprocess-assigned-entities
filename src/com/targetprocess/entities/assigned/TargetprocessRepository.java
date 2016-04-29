@@ -61,6 +61,7 @@ public class TargetprocessRepository extends BaseRepositoryImpl {
         // ?select={id,name,description,entityType:entityType.name,entityState:{entityState.id,entityState.name,entityState.isFinal}}
         // &where=(assignedUser.where(it.login=='admin').Count>0)and(entityState.isFinal==false)and(name.contains('code'))
         // and(entityType.name=='Bug'%20or%20entityType.name=='UserStory')
+        // &orderBy=id desc
 
         List<String> where = new ArrayList<>();
         where.add("(assignedUser.where(it.login=='" + userName + "').Count>0)");
@@ -70,10 +71,6 @@ public class TargetprocessRepository extends BaseRepositoryImpl {
             where.add("(name.contains('" + query + "'))");
         }
 
-        //String whereUser = "(assignedUser.where(it.login=='" + userName + "').Count>0)";
-        //String whereEntityType = "and(entityType.name=='Bug' or entityType.name=='UserStory')";
-        //String whereName = StringUtil.isNotEmpty(query) ? "and(name.contains('" + query + "'))" : "";
-
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(serverUrl + "/api/v2/assignable");
@@ -82,9 +79,8 @@ public class TargetprocessRepository extends BaseRepositoryImpl {
         }
 
         uriBuilder.addParameter("select", "{" + Assignable.FIELDS + "}");
-        //uriBuilder.addParameter("where", whereUser + whereEntityType + "and(entityState.isFinal==false)" + whereName);
-        //uriBuilder.addParameter("where", where.stream().reduce("", (result, wherePart) -> result + "and" + wherePart));
         uriBuilder.addParameter("where", String.join("and", where));
+        uriBuilder.addParameter("orderBy", "id desc");
 
         return uriBuilder.toString();
     }
