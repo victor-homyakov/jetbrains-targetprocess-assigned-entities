@@ -2,53 +2,13 @@ package com.targetprocess.entities.assigned;
 
 import com.google.gson.Gson;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Arrays;
 
+/**
+ * TODO rename to ApiV2ResponseDeserializationTest
+ */
 public class ApiV2Test extends TestCase {
-
-    public void testGetRequestUrlForEmptyQuery() {
-        assertEquals("http://localhost/targetprocess/api/v2/assignable" +
-                "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
-                "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory' or entityType.name=='Task')and(entityState.isFinal==false)") +
-                "&orderBy=" + encodeUrl("id desc"),
-            getRequestUrl(null));
-
-        assertEquals("http://localhost/targetprocess/api/v2/assignable" +
-                "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
-                "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory' or entityType.name=='Task')and(entityState.isFinal==false)") +
-                "&orderBy=" + encodeUrl("id desc"),
-            getRequestUrl(""));
-    }
-
-    public void testGetRequestUrlForZeroOffsetAndLimit() {
-        assertEquals("http://localhost/targetprocess/api/v2/assignable" +
-                "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
-                "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory' or entityType.name=='Task')and(entityState.isFinal==false)") +
-                "&orderBy=" + encodeUrl("id desc"),
-            getRequestUrl("", 0, 0));
-    }
-
-    public void testGetRequestUrl() {
-        assertEquals("http://localhost/targetprocess/api/v2/assignable" +
-                "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
-                "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory' or entityType.name=='Task')and(entityState.isFinal==false)and(name.contains('code') or id.ToString().contains('code'))") +
-                "&orderBy=" + encodeUrl("id desc") +
-                "&take=20&skip=0",
-            getRequestUrl("code", 0, 20));
-
-        assertEquals("http://localhost/targetprocess/api/v2/assignable" +
-                "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
-                "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory' or entityType.name=='Task')and(entityState.isFinal==false)and(name.contains('code') or id.ToString().contains('code'))") +
-                "&orderBy=" + encodeUrl("id desc") +
-                "&take=100&skip=20",
-            getRequestUrl("code", 20, 100));
-    }
-
     public void testDeserialization() {
         String responseString = "{\"items\":[" +
             "{" +
@@ -72,25 +32,4 @@ public class ApiV2Test extends TestCase {
         AssignablesWrapper response = gson.fromJson(responseString, AssignablesWrapper.class);
         System.out.println(Arrays.toString(response.getItems()));
     }
-
-    private static String getRequestUrl(@Nullable String query) {
-        return TargetprocessRepository
-            .getRequestUrl("http://localhost/targetprocess", "user", query)
-            .toString();
-    }
-
-    private static String getRequestUrl(@Nullable String query, int offset, int limit) {
-        return TargetprocessRepository
-            .getRequestUrl("http://localhost/targetprocess", "user", query, offset, limit)
-            .toString();
-    }
-
-    private static String encodeUrl(@NotNull String s) {
-        try {
-            return URLEncoder.encode(s, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 }
