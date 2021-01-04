@@ -20,7 +20,7 @@ public class TargetprocessRepositoryType extends BaseRepositoryType<Targetproces
     @NotNull
     @Override
     public Icon getIcon() {
-        return TargetprocessIcon.Targetprocess;
+        return Icons.Targetprocess;
     }
 
     @NotNull

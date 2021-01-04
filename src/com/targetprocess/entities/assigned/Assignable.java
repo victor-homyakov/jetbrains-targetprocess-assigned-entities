@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskType;
-import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,27 +56,24 @@ public class Assignable extends Task {
     @NotNull
     @Override
     public Icon getIcon() {
-        switch (getType()) {
-            case BUG:
-                return TasksIcons.Bug;
-            case FEATURE:
-                return TasksIcons.Feature;
-            default:
-                return isIssue() ? TasksIcons.Other : TasksIcons.Unknown;
-        }
+        return switch (getType()) {
+            case BUG -> Icons.Bug;
+            // AllIcons.Nodes.Favorite;
+            case FEATURE -> Icons.Feature;
+            // AllIcons.FileTypes.Any_type;
+            // AllIcons.FileTypes.Unknown;
+            default -> isIssue() ? Icons.Other : Icons.Unknown;
+        };
     }
 
     @NotNull
     @Override
     public TaskType getType() {
-        switch (entityType) {
-            case "Bug":
-                return TaskType.BUG;
-            case "UserStory":
-                return TaskType.FEATURE;
-            default:
-                return TaskType.OTHER;
-        }
+        return switch (entityType) {
+            case "Bug" -> TaskType.BUG;
+            case "UserStory" -> TaskType.FEATURE;
+            default -> TaskType.OTHER;
+        };
     }
 
     @Nullable
