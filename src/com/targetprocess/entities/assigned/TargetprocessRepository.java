@@ -7,11 +7,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
-import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.impl.client.BasicResponseHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,13 +22,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author khomyackov
- *         TODO inherit from NewBaseRepositoryImpl
+ * api/v1 query examples:
+ *
+ * ?include=%5Bid,name,description,createDate,modifyDate,entityType,entityState%5D
+ * &where=(assignedUser.id+eq+50916)+and+(entityState.isFinal+eq+'false')&orderByDesc=modifyDate&take={max}&skip={since}
+ *
+ * &where=(PlannedEndDate%20is%20not%20null)%20and%20(EntityState.IsFinal%20eq%20%22false%22)
+ *
+ * &take=100&include=[PlannedEndDate,Id,Project[Process[Name]]]
+ * &include=[Description,Owner,CreateDate,General[EntityType,Project[Color,Abbreviation],Name]]
+ *
+ * api/v2 query examples:
+ *
+ * https://test.tpondemand.com/api/v2/assignable
+ * ?select={id,name,description,entityType:entityType.name,entityState:{entityState.id,entityState.name,entityState.isFinal}}
+ * &where=(assignedUser.where(it.login=='admin').Count>0)and(entityState.isFinal==false)and(name.contains('code'))
+ * and(entityType.name=='Bug'%20or%20entityType.name=='UserStory')
+ * &orderBy=id desc
+ *
+ * pagination:
+ * https://test.tpondemand.com/api/v2/assignable
+ * ?where=(assignedUser.where(it.login=='admin').Count>0)and(entityType.name=='Task')and(entityState.isFinal==false)
+ * &select={id,name,description,entityType:entityType.name}
+ * &take=25&skip=25
+ * &orderBy=id desc
  */
 @Tag("Targetprocess")
-public class TargetprocessRepository extends BaseRepositoryImpl {
+public class TargetprocessRepository extends NewBaseRepositoryImpl {
 
     private static final Logger LOG = Logger.getInstance(TargetprocessRepository.class);
+    public static final String API_PATH = "/api/v2/assignable";
 
     /**
      * Serialization constructor
@@ -45,24 +70,6 @@ public class TargetprocessRepository extends BaseRepositoryImpl {
     }
 
     public static String getRequestUrl(String serverUrl, String userName, @Nullable String query) {
-        // api/v1:
-
-        // ?include=%5Bid,name,description,createDate,modifyDate,entityType,entityState%5D
-        // &where=(assignedUser.id+eq+50916)+and+(entityState.isFinal+eq+'false')&orderByDesc=modifyDate&take={max}&skip={since}
-
-        // &where=(PlannedEndDate%20is%20not%20null)%20and%20(EntityState.IsFinal%20eq%20%22false%22)
-
-        // &take=100&include=[PlannedEndDate,Id,Project[Process[Name]]]
-        // &include=[Description,Owner,CreateDate,General[EntityType,Project[Color,Abbreviation],Name]]
-
-        // api/v2:
-
-        // https://plan.tpondemand.com/api/v2/assignable
-        // ?select={id,name,description,entityType:entityType.name,entityState:{entityState.id,entityState.name,entityState.isFinal}}
-        // &where=(assignedUser.where(it.login=='admin').Count>0)and(entityState.isFinal==false)and(name.contains('code'))
-        // and(entityType.name=='Bug'%20or%20entityType.name=='UserStory')
-        // &orderBy=id desc
-
         List<String> where = new ArrayList<>();
         where.add("(assignedUser.where(it.login=='" + userName + "').Count>0)");
         where.add("(entityType.name=='Bug' or entityType.name=='UserStory')");
@@ -73,7 +80,7 @@ public class TargetprocessRepository extends BaseRepositoryImpl {
 
         URIBuilder uriBuilder;
         try {
-            uriBuilder = new URIBuilder(serverUrl + "/api/v2/assignable");
+            uriBuilder = new URIBuilder(serverUrl + API_PATH);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -94,52 +101,54 @@ public class TargetprocessRepository extends BaseRepositoryImpl {
     //TODO use offset and limit: &take=30&skip=30
     @Override
     public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed,
-            /*@NotNull*/ @Nullable ProgressIndicator cancelled) throws Exception {
+            @NotNull ProgressIndicator cancelled) throws Exception {
         Assignable.serverUrl = getUrl();
         String requestUrl = getRequestUrl(query);
-        LOG.info(String.format("Get issues %s", requestUrl));
+        LOG.info(String.format("Get issues: offset %d limit %d query %s", offset, limit, requestUrl));
 
         HttpClient client = getHttpClient();
-        GetMethod method = new GetMethod(requestUrl);
-        client.executeMethod(method);
+        HttpGet request = new HttpGet(requestUrl);
 
         try {
-            String responseString = method.getResponseBodyAsString();
+            ResponseHandler<String> responseHandler = new BasicResponseHandler();
+            String responseString = client.execute(request, responseHandler);
             Gson gson = new Gson();
             AssignablesWrapper response = gson.fromJson(responseString, AssignablesWrapper.class);
-            LOG.info("Received " + response.getItems().length + " assignable items");
+            LOG.info("Received " + response.getItems().length + " issues");
             return response.getItems();
         } catch (Exception e) {
             LOG.error(String.format("Cannot get response body for request %s", requestUrl), e);
             throw e;
         } finally {
-            method.releaseConnection();
+            request.releaseConnection();
         }
+    }
+
+    /**
+     * Return server's REST API path prefix, e.g. {@code /rest/api/latest} for JIRA or {@code /api/v3} for Gitlab.
+     * This value will be used in {@link #getRestApiUrl(Object...)}
+     *
+     * @return server's REST API path prefix
+     */
+    @Override
+    @NotNull
+    public String getRestApiPathPrefix() {
+        return API_PATH;
     }
 
     @Nullable
     @Override
     public CancellableConnection createCancellableConnection() {
-        //return new NewBaseRepositoryImpl.HttpTestConnection(new HttpGet(getRequestUrl("")));
-        return new CancellableConnection() {
-            @Override
-            protected void doTest() throws Exception {
-                getIssues("", 0, 1, false, null);
-            }
-
-            @Override
-            public void cancel() {
-            }
-        };
+        return new HttpTestConnection(new HttpGet(getRestApiUrl()));
     }
 
     @Nullable
     @Override
     public Task findTask(@NotNull String id) throws Exception {
+        LOG.info(String.format("Find task: id '%s' (not implemented)", id));
         return null;
     }
 
-    @SuppressWarnings("CloneDoesntCallSuperClone")
     @NotNull
     @Override
     public BaseRepository clone() {

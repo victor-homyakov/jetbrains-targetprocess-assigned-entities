@@ -1,8 +1,9 @@
 package com.targetprocess.entities.assigned;
 
-import com.intellij.tasks.integration.live.LiveIntegrationTestCase;
+// import com.intellij.tasks.integration.live.LiveIntegrationTestCase;
 
-public class TargetprocessIntegrationTest extends LiveIntegrationTestCase<TargetprocessRepository> {
+public class TargetprocessIntegrationTest /*extends LiveIntegrationTestCase<TargetprocessRepository>*/ {
+    /*
     @Override
     protected TargetprocessRepository createRepository() throws Exception {
         try {
@@ -24,5 +25,5 @@ public class TargetprocessIntegrationTest extends LiveIntegrationTestCase<Target
         assertNotNull(error);
         assertTrue(error.getMessage().contains("Unauthorized"));
     }
-
+    */
 }
