@@ -56,24 +56,30 @@ public class Assignable extends Task {
     @NotNull
     @Override
     public Icon getIcon() {
-        return switch (getType()) {
-            case BUG -> Icons.Bug;
-            // AllIcons.Nodes.Favorite;
-            case FEATURE -> Icons.Feature;
-            // AllIcons.FileTypes.Any_type;
-            // AllIcons.FileTypes.Unknown;
-            default -> isIssue() ? Icons.Other : Icons.Unknown;
-        };
+        switch (getType()) {
+            case BUG:
+                return Icons.Bug;
+            case FEATURE:
+                // AllIcons.Nodes.Favorite;
+                return Icons.Feature;
+            default:
+                // AllIcons.FileTypes.Any_type;
+                // AllIcons.FileTypes.Unknown;
+                return isIssue() ? Icons.Other : Icons.Unknown;
+        }
     }
 
     @NotNull
     @Override
     public TaskType getType() {
-        return switch (entityType) {
-            case "Bug" -> TaskType.BUG;
-            case "UserStory" -> TaskType.FEATURE;
-            default -> TaskType.OTHER;
-        };
+        switch (entityType) {
+            case "Bug":
+                return TaskType.BUG;
+            case "UserStory":
+                return TaskType.FEATURE;
+            default:
+                return TaskType.OTHER;
+        }
     }
 
     @Nullable
