@@ -17,6 +17,7 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,7 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
         super(repository);
     }
 
-    public static String getRequestUrl(String serverUrl, String userName, @Nullable String query) {
+    public static URIBuilder getRequestUrl(String serverUrl, String userName, @Nullable String query) {
         List<String> where = new ArrayList<>();
         where.add("(assignedUser.where(it.login=='" + userName + "').Count>0)");
         where.add("(entityType.name=='Bug' or entityType.name=='UserStory')");
@@ -89,21 +90,30 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
         uriBuilder.addParameter("where", String.join("and", where));
         uriBuilder.addParameter("orderBy", "id desc");
 
-        return uriBuilder.toString();
+        return uriBuilder;
     }
 
-    @NotNull
-    public String getRequestUrl(@Nullable String query) {
-        return getRequestUrl(getUrl(), getUsername(), query);
+    public static URIBuilder getRequestUrl(String serverUrl, String userName, @Nullable String query, int offset, int limit) {
+        URIBuilder url = getRequestUrl(serverUrl, userName, query);
+
+        if (offset != 0 || limit != 0) {
+            url.addParameter("take", String.valueOf(limit));
+            url.addParameter("skip", String.valueOf(offset));
+        }
+
+        return url;
+    }
+
+    public URIBuilder getRequestUrl(@Nullable String query, int offset, int limit) {
+        return getRequestUrl(getUrl(), getUsername(), query, offset, limit);
     }
 
     //TODO use withClosed parameter in url
-    //TODO use offset and limit: &take=30&skip=30
     @Override
     public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed,
             @NotNull ProgressIndicator cancelled) throws Exception {
         Assignable.serverUrl = getUrl();
-        String requestUrl = getRequestUrl(query);
+        URI requestUrl = getRequestUrl(query, offset, limit).build();
         LOG.info(String.format("Get issues: offset %d limit %d query %s", offset, limit, requestUrl));
 
         HttpClient client = getHttpClient();
@@ -114,8 +124,9 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
             String responseString = client.execute(request, responseHandler);
             Gson gson = new Gson();
             AssignablesWrapper response = gson.fromJson(responseString, AssignablesWrapper.class);
-            LOG.info("Received " + response.getItems().length + " issues");
-            return response.getItems();
+            Assignable[] assignables = response.getItems();
+            LOG.info("Received " + assignables.length + " issues");
+            return assignables;
         } catch (Exception e) {
             LOG.error(String.format("Cannot get response body for request %s", requestUrl), e);
             throw e;
