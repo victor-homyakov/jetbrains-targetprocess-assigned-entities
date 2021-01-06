@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public class ApiV2Test extends TestCase {
 
-    public void testGetRequestUrl() {
+    public void testGetRequestUrlForEmptyQuery() {
         assertEquals("http://localhost/targetprocess/api/v2/assignable" +
                 "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
                 "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory')and(entityState.isFinal==false)") +
@@ -23,12 +23,30 @@ public class ApiV2Test extends TestCase {
                 "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory')and(entityState.isFinal==false)") +
                 "&orderBy=" + encodeUrl("id desc"),
             getRequestUrl(""));
+    }
+
+    public void testGetRequestUrlForZeroOffsetAndLimit() {
+        assertEquals("http://localhost/targetprocess/api/v2/assignable" +
+                "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
+                "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory')and(entityState.isFinal==false)") +
+                "&orderBy=" + encodeUrl("id desc"),
+            getRequestUrl("", 0, 0));
+    }
+
+    public void testGetRequestUrl() {
+        assertEquals("http://localhost/targetprocess/api/v2/assignable" +
+                "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
+                "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory')and(entityState.isFinal==false)and(name.contains('code') or id.ToString().contains('code'))") +
+                "&orderBy=" + encodeUrl("id desc") +
+                "&take=20&skip=0",
+            getRequestUrl("code", 0, 20));
 
         assertEquals("http://localhost/targetprocess/api/v2/assignable" +
                 "?select=" + encodeUrl("{id,name,description,entityType:entityType.name}") +
                 "&where=" + encodeUrl("(assignedUser.where(it.login=='user').Count>0)and(entityType.name=='Bug' or entityType.name=='UserStory')and(entityState.isFinal==false)and(name.contains('code') or id.ToString().contains('code'))") +
-                "&orderBy=" + encodeUrl("id desc"),
-            getRequestUrl("code"));
+                "&orderBy=" + encodeUrl("id desc") +
+                "&take=100&skip=20",
+            getRequestUrl("code", 20, 100));
     }
 
     public void testDeserialization() {
@@ -56,7 +74,15 @@ public class ApiV2Test extends TestCase {
     }
 
     private static String getRequestUrl(@Nullable String query) {
-        return TargetprocessRepository.getRequestUrl("http://localhost/targetprocess", "user", query);
+        return TargetprocessRepository
+            .getRequestUrl("http://localhost/targetprocess", "user", query)
+            .toString();
+    }
+
+    private static String getRequestUrl(@Nullable String query, int offset, int limit) {
+        return TargetprocessRepository
+            .getRequestUrl("http://localhost/targetprocess", "user", query, offset, limit)
+            .toString();
     }
 
     private static String encodeUrl(@NotNull String s) {
