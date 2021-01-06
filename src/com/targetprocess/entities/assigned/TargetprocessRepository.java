@@ -73,7 +73,7 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
     public static URIBuilder getRequestUrl(String serverUrl, String userName, @Nullable String query) {
         List<String> where = new ArrayList<>();
         where.add("(assignedUser.where(it.login=='" + userName + "').Count>0)");
-        where.add("(entityType.name=='Bug' or entityType.name=='UserStory')");
+        where.add("(entityType.name=='Bug' or entityType.name=='UserStory' or entityType.name=='Task')");
         where.add("(entityState.isFinal==false)");
         if (StringUtil.isNotEmpty(query)) {
             where.add("(name.contains('" + query + "') or id.ToString().contains('" + query + "'))");
