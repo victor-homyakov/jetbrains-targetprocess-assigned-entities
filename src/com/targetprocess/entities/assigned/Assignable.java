@@ -37,6 +37,18 @@ public class Assignable extends Task {
 
     @NotNull
     @Override
+    public String getPresentableId() {
+        return TaskIdConverter.getPresentableId(id, entityType);
+    }
+
+    @NotNull
+    @Override
+    public String getNumber() {
+        return getId();
+    }
+
+    @NotNull
+    @Override
     public String getSummary() {
         return summary;
     }
