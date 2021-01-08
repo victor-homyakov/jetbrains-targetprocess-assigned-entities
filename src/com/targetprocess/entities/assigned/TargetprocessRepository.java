@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * api/v1 query examples:
@@ -36,6 +37,7 @@ import java.util.List;
  *
  * api/v2 query examples:
  *
+ * get entities:
  * https://test.tpondemand.com/api/v2/assignable
  * ?select={id,name,description,entityType:entityType.name,entityState:{entityState.id,entityState.name,entityState.isFinal}}
  * &where=(assignedUser.where(it.login=='admin').Count>0)and(entityState.isFinal==false)and(name.contains('code'))
@@ -59,6 +61,10 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
     private static final Logger LOG = Logger.getInstance(TargetprocessRepository.class);
     public static final String API_PATH = "/api/v2/assignable";
 
+    private boolean usingBugs = true;
+    private boolean usingUserStories = true;
+    private boolean usingTasks = false;
+
     /**
      * Serialization constructor
      */
@@ -73,12 +79,14 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
 
     public TargetprocessRepository(TargetprocessRepository repository) {
         super(repository);
+
+        usingBugs = repository.usingBugs;
+        usingUserStories = repository.usingUserStories;
+        usingTasks = repository.usingTasks;
     }
 
-    public static URIBuilder getRequestUrl(String serverUrl, String userName, @Nullable String query,
-        int offset, int limit, boolean withClosed) {
-
-        List<String> where = buildWhereParameter(userName);
+    public URIBuilder getRequestUrl(@Nullable String query, int offset, int limit, boolean withClosed) {
+        List<String> where = buildWhereParameter();
         if (!withClosed) {
             where.add("(entityState.isFinal==false)");
         }
@@ -86,8 +94,7 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
             where.add("(name.contains('" + query + "') or id.ToString().contains('" + query + "'))");
         }
 
-        URIBuilder url = buildUrl(serverUrl, where, "id desc");
-
+        URIBuilder url = buildUrl(where, "id desc");
         if (offset != 0 || limit != 0) {
             url.addParameter("take", String.valueOf(limit));
             url.addParameter("skip", String.valueOf(offset));
@@ -97,19 +104,19 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
     }
 
     @NotNull
-    public static URIBuilder getRequestUrl(String serverUrl, String userName, @NotNull String id) {
-        List<String> where = buildWhereParameter(userName);
+    public URIBuilder getRequestUrl(@NotNull String id) {
+        List<String> where = buildWhereParameter();
         where.add("(id==" + id + ")");
-
-        return buildUrl(serverUrl, where, null);
+        return buildUrl(where, null);
     }
 
     @Override
     public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed,
         @NotNull ProgressIndicator cancelled) throws Exception {
-        LOG.info(String.format("Get entities: offset %d limit %d withClosed %s", offset, limit, withClosed));
+        LOG.info(String.format("Get entities: query '%s' offset %d limit %d withClosed %s",
+            query == null ? "" : query, offset, limit, withClosed));
         Assignable.serverUrl = getUrl();
-        URI requestUrl = getRequestUrl(getUrl(), getUsername(), query, offset, limit, withClosed).build();
+        URI requestUrl = getRequestUrl(query, offset, limit, withClosed).build();
         return getIssues(requestUrl);
     }
 
@@ -128,6 +135,7 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
     @Nullable
     @Override
     public CancellableConnection createCancellableConnection() {
+        // TODO more specific url, e.g. new URIBuilder(getRestApiUrl("entity")).addParameter("random", 12345).build();
         return new HttpTestConnection(new HttpGet(getRestApiUrl()));
     }
 
@@ -139,7 +147,7 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
             return null;
         }
 
-        URI requestUrl = getRequestUrl(getUrl(), getUsername(), id).build();
+        URI requestUrl = getRequestUrl(id).build();
         Task[] tasks = getIssues(requestUrl);
         switch (tasks.length) {
             case 0:
@@ -190,17 +198,33 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
         return super.getFeatures() | NATIVE_SEARCH;
     }
 
-    private static List<String> buildWhereParameter(@NotNull String userName) {
+    private List<String> buildWhereParameter() {
         List<String> where = new ArrayList<>();
-        where.add("(assignedUser.where(it.login=='" + userName + "').Count>0)");
-        where.add("(entityType.name=='Bug' or entityType.name=='UserStory' or entityType.name=='Task')");
+        where.add("(assignedUser.where(it.login=='" + getUsername() + "').Count>0)");
+
+        List<String> entityTypes = new ArrayList<>(3);
+        if (usingBugs) {
+            entityTypes.add("Bug");
+        }
+        if (usingUserStories) {
+            entityTypes.add("UserStory");
+        }
+        if (usingTasks) {
+            entityTypes.add("Task");
+        }
+
+        String entityTypesClause = entityTypes
+            .stream()
+            .map(entityType -> "entityType.name=='" + entityType + "'")
+            .collect(Collectors.joining(" or ", "(", ")"));
+        where.add(entityTypesClause);
         return where;
     }
 
-    private static URIBuilder buildUrl(String serverUrl, List<String> where, String orderBy) {
+    private URIBuilder buildUrl(List<String> where, String orderBy) {
         URIBuilder uriBuilder;
         try {
-            uriBuilder = new URIBuilder(serverUrl + API_PATH);
+            uriBuilder = new URIBuilder(getUrl() + API_PATH);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -234,5 +258,42 @@ public class TargetprocessRepository extends NewBaseRepositoryImpl {
         } finally {
             request.releaseConnection();
         }
+    }
+
+    public boolean isUsingBugs() {
+        return usingBugs;
+    }
+
+    public void setUsingBugs(boolean usingBugs) {
+        this.usingBugs = usingBugs;
+    }
+
+    public boolean isUsingUserStories() {
+        return usingUserStories;
+    }
+
+    public void setUsingUserStories(boolean usingUserStories) {
+        this.usingUserStories = usingUserStories;
+    }
+
+    public boolean isUsingTasks() {
+        return usingTasks;
+    }
+
+    public void setUsingTasks(boolean usingTasks) {
+        this.usingTasks = usingTasks;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        TargetprocessRepository that = (TargetprocessRepository) o;
+
+        if (usingBugs != that.usingBugs) return false;
+        if (usingUserStories != that.usingUserStories) return false;
+        return usingTasks == that.usingTasks;
     }
 }
