@@ -1,13 +1,15 @@
 <idea-plugin>
     <id>com.targetprocess.assigned.entities.plugin</id>
-    <name>Connector to assigned Targetprocess entities</name>
-    <version>1.2</version>
+    <name>Connector to Assigned Targetprocess Entities</name>
+    <version>1.3</version>
     <vendor email="vkhomyackov@gmail.com" url="https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities">Victor Homyakov</vendor>
 
     <description><![CDATA[
       Adds support of Targetprocess server into Jetbrains' IDE (IDEA, WebStorm, etc.).
-      Retrieves assigned User Stories and Bugs from Targetprocess server.
-      Settings are in Preferences > Tools > Tasks > Servers<br>
+      Retrieves assigned User Stories and Bugs from Targetprocess server.<br>
+      Settings are in Preferences > Tools > Tasks > Servers.<br>
+      Full Changelog:
+      https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/blob/master/CHANGELOG.md
     ]]></description>
 
     <change-notes><![CDATA[

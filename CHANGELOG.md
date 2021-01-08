@@ -1,5 +1,30 @@
 # Changelog
 
+## [v1.3](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/tree/v1.3) (2021-01-08)
+
+[Full Changelog](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/compare/v1.2...v1.3)
+
+**Implemented enhancements:**
+
+- Task id should have form `EntityType\#EntityId`, e.g. `Bug\#123456` [\#2](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/issues/2)
+- Choose entity types to work with \(fixes \#9\) [\#18](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/pull/18) ([victor-homyakov](https://github.com/victor-homyakov))
+- Make presentable ID in form "Bug\#123", "US\#123" [\#17](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/pull/17) ([victor-homyakov](https://github.com/victor-homyakov))
+- Get Bugs, User Stories and Tasks [\#16](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/pull/16) ([victor-homyakov](https://github.com/victor-homyakov))
+- Use offset and limit in queries [\#15](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/pull/15) ([victor-homyakov](https://github.com/victor-homyakov))
+
+**Fixed bugs:**
+
+- Option "Include closed tasks" should work [\#8](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/issues/8)
+
+**Closed issues:**
+
+- The task list is empty [\#9](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/issues/9)
+- Migrate from BaseRepositoryImpl to NewBaseRepositoryImpl [\#4](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/issues/4)
+
+**Merged pull requests:**
+
+- Add pluginIcon.svg [\#14](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/pull/14) ([victor-homyakov](https://github.com/victor-homyakov))
+
 ## [v1.2](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/tree/v1.2) (2021-01-05)
 
 [Full Changelog](https://github.com/victor-homyakov/jetbrains-targetprocess-assigned-entities/compare/v1.1...v1.2)
